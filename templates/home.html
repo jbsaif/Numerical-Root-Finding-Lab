@@ -1,0 +1,283 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* Hero Section */
+    .hero-section {
+        text-align: center;
+        padding: 20px 0 40px;
+    }
+
+    .hero-badge {
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        background: rgba(56, 189, 248, 0.1);
+        color: var(--accent);
+        font-size: 0.82rem;
+        font-weight: 700;
+        padding: 6px 16px;
+        border-radius: 20px;
+        border: 1px solid rgba(56, 189, 248, 0.25);
+        margin-bottom: 18px;
+        letter-spacing: 0.8px;
+    }
+
+    .pulse-dot {
+        width: 8px;
+        height: 8px;
+        background-color: var(--accent);
+        border-radius: 50%;
+        display: inline-block;
+        box-shadow: 0 0 8px var(--accent);
+    }
+
+    .hero-title {
+        font-size: 2.8rem;
+        font-weight: 800;
+        letter-spacing: -1px;
+        margin-bottom: 15px;
+        color: var(--text-primary);
+    }
+
+    .hero-subtitle {
+        font-size: 1.1rem;
+        color: var(--text-secondary);
+        max-width: 650px;
+        margin: 0 auto 40px;
+        line-height: 1.6;
+    }
+
+    /* Method Grid */
+    .methods-grid {
+        display: grid;
+        grid-template-columns: 1fr 1fr;
+        gap: 25px;
+        margin-bottom: 50px;
+    }
+
+    /* 🌟 MAIN METHOD CARDS WITH TOP ANIMATION */
+    .method-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 32px 30px 28px;
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 15px rgba(0, 0, 0, 0.04);
+    }
+
+    /* Animated Top Line for Method Cards */
+    .method-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0%;
+        height: 4px;
+        background: linear-gradient(90deg, #38bdf8, #818cf8, #c084fc);
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 4px 4px 0 0;
+        box-shadow: 0 2px 10px rgba(56, 189, 248, 0.5);
+    }
+
+    .method-card:hover {
+        transform: translateY(-6px);
+        border-color: rgba(56, 189, 248, 0.4);
+        box-shadow: 0 16px 30px rgba(0, 0, 0, 0.08);
+    }
+
+    .method-card:hover::before {
+        width: 100%;
+    }
+
+    .method-tag {
+        font-size: 0.75rem;
+        font-weight: 800;
+        color: var(--accent);
+        letter-spacing: 1.2px;
+        text-transform: uppercase;
+        margin-bottom: 10px;
+    }
+
+    .method-card h3 {
+        font-size: 1.5rem;
+        margin-bottom: 12px;
+        color: var(--text-primary);
+    }
+
+    .method-card p {
+        color: var(--text-secondary);
+        font-size: 0.95rem;
+        line-height: 1.6;
+        margin-bottom: 28px;
+    }
+
+    /* 🚀 STYLISH OPEN CALCULATOR BUTTON */
+    .btn-calc {
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 10px;
+        background: rgba(56, 189, 248, 0.08);
+        color: var(--accent);
+        border: 1px solid rgba(56, 189, 248, 0.3);
+        padding: 12px 22px;
+        border-radius: 30px;
+        text-decoration: none;
+        font-weight: 700;
+        font-size: 0.92rem;
+        transition: all 0.3s ease;
+        width: fit-content;
+    }
+
+    .btn-calc span {
+        transition: transform 0.25s ease;
+    }
+
+    .btn-calc:hover {
+        background: var(--accent);
+        color: #ffffff;
+        border-color: var(--accent);
+        box-shadow: 0 6px 18px rgba(56, 189, 248, 0.3);
+    }
+
+    .btn-calc:hover span {
+        transform: translateX(5px);
+    }
+
+    /* 🎨 FEATURES SECTION */
+    .section-title {
+        text-align: center;
+        font-size: 1.8rem;
+        font-weight: 800;
+        margin-bottom: 30px;
+        color: var(--text-primary);
+    }
+
+    .features-grid {
+        display: grid;
+        grid-template-columns: repeat(3, 1fr);
+        gap: 20px;
+    }
+
+    .feature-card {
+        background: var(--card-bg);
+        border: 1px solid var(--border);
+        border-radius: 16px;
+        padding: 28px 20px;
+        text-align: center;
+        transition: all 0.35s cubic-bezier(0.4, 0, 0.2, 1);
+        position: relative;
+        overflow: hidden;
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.03);
+    }
+
+    /* Animated Top Line for Feature Cards */
+    .feature-card::before {
+        content: '';
+        position: absolute;
+        top: 0;
+        left: 50%;
+        transform: translateX(-50%);
+        width: 0%;
+        height: 4px;
+        background: linear-gradient(90deg, #38bdf8, #818cf8);
+        transition: width 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        border-radius: 4px 4px 0 0;
+        box-shadow: 0 2px 8px rgba(56, 189, 248, 0.4);
+    }
+
+    .feature-card:hover {
+        transform: translateY(-5px);
+        border-color: rgba(56, 189, 248, 0.4);
+        box-shadow: 0 12px 24px rgba(0, 0, 0, 0.06);
+    }
+
+    .feature-card:hover::before {
+        width: 100%;
+    }
+
+    .feature-icon-wrapper {
+        width: 56px;
+        height: 56px;
+        background: rgba(56, 189, 248, 0.1);
+        border: 1px solid rgba(56, 189, 248, 0.2);
+        border-radius: 14px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-size: 1.6rem;
+        margin: 0 auto 16px;
+    }
+
+    .feature-card h4 {
+        font-size: 1.1rem;
+        font-weight: 700;
+        margin-bottom: 8px;
+        color: var(--text-primary);
+    }
+
+    .feature-card p {
+        font-size: 0.88rem;
+        color: var(--text-secondary);
+        line-height: 1.5;
+    }
+</style>
+
+<div class="hero-section animate-slide-up">
+    <div class="hero-badge">
+        <span class="pulse-dot"></span> NUMERICAL METHODS LAB
+    </div>
+    <h1 class="hero-title">Numerical Root Finding Suite</h1>
+    <p class="hero-subtitle">An interactive laboratory for solving non-linear algebraic equations. Visualize iteration convergence, step-by-step interval behavior, and generate PDF lab reports instantly.</p>
+</div>
+
+<!-- Main Algorithm Cards -->
+<div class="methods-grid animate-slide-up">
+    <div class="method-card">
+        <div>
+            <div class="method-tag">Interval Halving</div>
+            <h3>Bisection Method</h3>
+            <p>Repeatedly bisects an interval [a, b] and selects a subinterval where the root exists based on the Intermediate Value Theorem (f(a) · f(b) < 0).</p>
+        </div>
+        <a href="/bisection" class="btn-calc">Open Calculator <span>→</span></a>
+    </div>
+
+    <div class="method-card">
+        <div>
+            <div class="method-tag">Regula Falsi</div>
+            <h3>False Position Method</h3>
+            <p>Uses linear interpolation by connecting interval points with a straight line (secant line) to converge to the root faster than standard bisection.</p>
+        </div>
+        <a href="/false-position" class="btn-calc">Open Calculator <span>→</span></a>
+    </div>
+</div>
+
+<!-- Features Section -->
+<h2 class="section-title animate-slide-up">Platform Features</h2>
+<div class="features-grid animate-slide-up">
+    <div class="feature-card">
+        <div class="feature-icon-wrapper">📊</div>
+        <h4>Interactive Plots</h4>
+        <p>Dynamic function visualization powered by Matplotlib & Base64 rendering.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon-wrapper">🎬</div>
+        <h4>Step Animations</h4>
+        <p>Bar chart visualizer to step through interval changes in real time.</p>
+    </div>
+
+    <div class="feature-card">
+        <div class="feature-icon-wrapper">📄</div>
+        <h4>PDF Reports</h4>
+        <p>Export clean, professionally formatted lab reports with tables and formulas.</p>
+    </div>
+</div>
+{% endblock %}

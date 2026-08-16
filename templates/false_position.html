@@ -1,0 +1,381 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    /* রুট বক্স এবং ৩টি বাটনের মধ্যকার দূরত্ব ও প্রিমিয়াম লুকের জন্য CSS */
+    .results-container {
+        background: rgba(30, 41, 59, 0.7);
+        backdrop-filter: blur(12px);
+        border: 1px solid rgba(51, 65, 85, 0.6);
+        border-radius: 16px;
+        padding: 24px;
+        margin-top: 25px;
+        box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.3);
+    }
+
+    .result-badge {
+        background: linear-gradient(135deg, #0ea5e9 0%, #2563eb 100%);
+        color: #ffffff;
+        padding: 16px 20px;
+        border-radius: 12px;
+        margin-bottom: 24px;
+        box-shadow: 0 4px 15px rgba(14, 165, 233, 0.3);
+    }
+
+    .result-badge h3 {
+        margin: 0;
+        font-size: 1.25rem;
+        font-weight: 600;
+    }
+
+    .action-toolbar {
+        display: flex;
+        gap: 12px;
+        flex-wrap: wrap;
+        margin-top: 15px;
+        align-items: center;
+    }
+
+    .action-toolbar .btn-secondary, 
+    .action-toolbar .btn-pdf {
+        background: #1e293b;
+        color: #f8fafc;
+        border: 1px solid #475569;
+        padding: 10px 18px;
+        border-radius: 10px;
+        font-weight: 500;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        display: inline-flex;
+        align-items: center;
+        gap: 8px;
+        box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+    }
+
+    .action-toolbar .btn-secondary:hover {
+        background: #334155;
+        border-color: #38bdf8;
+        color: #38bdf8;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(56, 189, 248, 0.25);
+    }
+
+    .action-toolbar .btn-pdf:hover {
+        background: #e11d48;
+        border-color: #f43f5e;
+        color: #ffffff;
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(244, 63, 94, 0.3);
+    }
+</style>
+
+<div class="page-header">
+    <a href="/" class="back-btn" style="display: inline-flex; align-items: center; gap: 6px;">
+        <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="19" y1="12" x2="5" y2="12"></line><polyline points="12 19 5 12 12 5"></polyline></svg>
+        Back to Home
+    </a>
+    <h2>False Position Method Calculator</h2>
+</div>
+
+<div class="form-card">
+    <!-- Preset Buttons Section -->
+    <div style="margin-bottom: 20px;">
+        <label style="font-weight: 600; color: #38bdf8; margin-bottom: 10px; display: inline-flex; align-items: center; gap: 6px;">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"></polygon></svg>
+            Quick Example Presets:
+        </label>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+            <button type="button" class="btn-secondary" onclick="loadPreset('x**3 - x - 2', 1, 2)">x³ - x - 2</button>
+            <button type="button" class="btn-secondary" onclick="loadPreset('cos(x) - x*exp(x)', 0, 1)">cos(x) - x·eˣ</button>
+            <button type="button" class="btn-secondary" onclick="loadPreset('x**2 - 4*sin(x)', 1, 3)">x² - 4·sin(x)</button>
+        </div>
+    </div>
+
+    <form method="POST">
+        <div class="form-group">
+            <label>Equation f(x) = 0:</label>
+            <input type="text" id="eqInput" name="equation" value="{{ equation }}" placeholder="e.g. x^3 - x - 2" oninput="validateAndFormatInput(this)" required>
+            <small id="syntaxHint" style="color: #94a3b8; font-size: 0.8rem; display: inline-flex; align-items: center; gap: 4px; margin-top: 5px;">
+                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg>
+                Tip: You can use standard notation like <code>x^3</code> or math functions like <code>sin(x)</code>, <code>cos(x)</code>, <code>exp(x)</code>.
+            </small>
+        </div>
+        
+        <div class="form-row">
+            <div class="form-group">
+                <label>Lower Bound (a):</label>
+                <input type="number" step="any" id="aInput" name="a" value="{{ a }}" placeholder="e.g. 1" required>
+            </div>
+            <div class="form-group">
+                <label>Upper Bound (b):</label>
+                <input type="number" step="any" id="bInput" name="b" value="{{ b }}" placeholder="e.g. 2" required>
+            </div>
+        </div>
+
+        <div class="form-row">
+            <div class="form-group">
+                <label>Tolerance (e.g. 0.0001):</label>
+                <input type="number" step="any" name="tol" value="{{ tol if tol else 0.0001 }}" required>
+            </div>
+            <div class="form-group">
+                <label>Max Iterations:</label>
+                <input type="number" name="max_iter" value="{{ max_iter if max_iter else 20 }}" required>
+            </div>
+        </div>
+
+        <button type="submit" class="submit-btn">Calculate Root</button>
+    </form>
+</div>
+
+{% if error %}
+<div class="error-card animate-slide-up">
+    <p><strong>Error:</strong> {{ error }}</p>
+</div>
+{% endif %}
+
+{% if result is not none %}
+<div class="results-container animate-slide-up">
+    <div class="result-badge">
+        <h3>Calculated Root: <span>x ≈ {{ result }}</span></h3>
+    </div>
+
+    <!-- Toolbar Buttons -->
+    <div class="action-toolbar">
+        {% if plot_url %}
+        <button type="button" class="btn-secondary" onclick="toggleGraph()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><line x1="18" y1="20" x2="18" y2="10"></line><line x1="12" y1="20" x2="12" y2="4"></line><line x1="6" y1="20" x2="6" y2="14"></line></svg>
+            Toggle Plot Graph
+        </button>
+        {% endif %}
+        
+        <button type="button" class="btn-secondary" onclick="toggleStepVisualizer()">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg>
+            Toggle Step Animation
+        </button>
+        
+        <form action="/download-pdf" method="POST" style="display:inline; margin: 0;">
+            <input type="hidden" name="method_name" value="False Position Method">
+            <input type="hidden" name="equation" value="{{ equation }}">
+            <input type="hidden" name="a" value="{{ a }}">
+            <input type="hidden" name="b" value="{{ b }}">
+            <input type="hidden" name="tol" value="{{ tol }}">
+            <input type="hidden" name="max_iter" value="{{ max_iter }}">
+            <button type="submit" class="btn-pdf">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"></path><polyline points="14 2 14 8 20 8"></polyline><line x1="16" y1="13" x2="8" y2="13"></line><line x1="16" y1="17" x2="8" y2="17"></line><polyline points="10 9 9 9 8 9"></polyline></svg>
+                Export PDF Report
+            </button>
+        </form>
+    </div>
+
+    {% if plot_url %}
+    <div id="graph-container" class="graph-card hidden-section" style="margin-top: 20px;">
+        <h3>Function Graph & Root Marker</h3>
+        <img src="data:image/png;base64,{{ plot_url }}" alt="False Position Method Plot">
+    </div>
+    {% endif %}
+
+    <!-- Dedicated Step Animation Container -->
+    <div id="step-visualizer-container" class="graph-card animate-slide-up hidden-section" style="margin-top: 20px;">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 15px; flex-wrap: wrap; gap: 10px;">
+            <h3 style="margin: 0; color: #f8fafc;">Step-by-Step Iteration Progress</h3>
+            <div style="display: flex; align-items: center; gap: 8px; flex-wrap: wrap;">
+                <button id="prevBtn" type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="changeStep(-1)">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="15 18 9 12 15 6"></polyline></svg> Prev
+                </button>
+                <span id="stepLabel" style="font-weight: bold; color: #38bdf8; font-family: monospace; padding: 0 5px;">Iteration 1</span>
+                <button id="nextBtn" type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 0.85rem;" onclick="changeStep(1)">
+                    Next <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="9 18 15 12 9 6"></polyline></svg>
+                </button>
+                <button id="playBtn" type="button" class="btn-secondary" style="padding: 6px 12px; font-size: 0.85rem; background: rgba(56, 189, 248, 0.15); border-color: #38bdf8;" onclick="togglePlay()">
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Auto Play
+                </button>
+            </div>
+        </div>
+        
+        <!-- Live Detailed Grid Boxes -->
+        <div id="stepDetailsBox" style="background: #0f172a; border: 1px solid #334155; border-radius: 10px; padding: 15px; display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 12px; margin-bottom: 15px;"></div>
+
+        <div style="background: #0f172a; padding: 15px; border-radius: 8px; border: 1px solid #334155;">
+            <canvas id="stepChart" height="110"></canvas>
+        </div>
+    </div>
+
+    <div class="table-card" style="margin-top: 20px;">
+        <h3>Iteration Table</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>Iter</th>
+                    <th>a</th>
+                    <th>b</th>
+                    <th>c (False Position)</th>
+                    <th>f(c)</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for step in steps %}
+                <tr>
+                    <td>{{ step.iteration }}</td>
+                    <td>{{ step.a }}</td>
+                    <td>{{ step.b }}</td>
+                    <td><strong>{{ step.c }}</strong></td>
+                    <td>{{ step.fc }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+    </div>
+</div>
+{% endif %}
+
+<script>
+    function loadPreset(eq, a, b) {
+        document.getElementById("eqInput").value = eq;
+        document.getElementById("aInput").value = a;
+        document.getElementById("bInput").value = b;
+        validateAndFormatInput(document.getElementById("eqInput"));
+    }
+
+    function validateAndFormatInput(inputElem) {
+        let val = inputElem.value;
+        const hint = document.getElementById("syntaxHint");
+        
+        if (val.includes("^")) {
+            const cursorPosition = inputElem.selectionStart;
+            inputElem.value = val.replace(/\^/g, "**");
+            inputElem.setSelectionRange(cursorPosition + 1, cursorPosition + 1);
+            val = inputElem.value;
+        }
+
+        if (val.trim() === "") {
+            hint.style.color = "#94a3b8";
+            hint.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><circle cx="12" cy="12" r="10"></circle><line x1="12" y1="16" x2="12" y2="12"></line><line x1="12" y1="8" x2="12.01" y2="8"></line></svg> Tip: You can use standard notation like <code>x^3</code> or math functions like <code>sin(x)</code>, <code>cos(x)</code>, <code>exp(x)</code>.';
+        } else if (/[^x0-9\+\-\*\/\.\(\)\sA-Za-z]/g.test(val)) {
+            hint.style.color = "#f43f5e";
+            hint.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><path d="m21.73 18-8-14a2 2 0 0 0-3.48 0l-8 14A2 2 0 0 0 4 21h16a2 2 0 0 0 1.73-3Z"></path><line x1="12" y1="9" x2="12" y2="13"></line><line x1="12" y1="17" x2="12.01" y2="17"></line></svg> Invalid characters detected.';
+        } else {
+            hint.style.color = "#10b981";
+            hint.innerHTML = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round" style="vertical-align: middle;"><polyline points="20 6 9 17 4 12"></polyline></svg> Syntax looks valid.';
+        }
+    }
+
+    function toggleGraph() {
+        var graph = document.getElementById("graph-container");
+        if (graph) graph.classList.toggle("hidden-section");
+    }
+
+    function toggleStepVisualizer() {
+        var container = document.getElementById("step-visualizer-container");
+        if (container) {
+            container.classList.toggle("hidden-section");
+            if (!container.classList.contains("hidden-section")) {
+                currentStepIdx = 0;
+                renderStepChart(currentStepIdx); // বক্স খোলার সাথে সাথেই প্রথম স্টেপ লোড হয়ে যাবে
+            }
+        }
+    }
+
+    let stepsData = [];
+    try {
+        stepsData = JSON.parse('{{ steps_json | safe }}');
+    } catch(e) {
+        console.error("JSON parse error:", e);
+    }
+
+    let currentStepIdx = 0;
+    let autoPlayInterval = null;
+    let stepChart = null;
+
+    function renderStepChart(index) {
+        if (!stepsData || stepsData.length === 0) return;
+        const step = stepsData[index];
+        
+        const labelElem = document.getElementById("stepLabel");
+        if (labelElem) labelElem.innerText = `Iteration ${step.iteration} / ${stepsData.length}`;
+
+        const detailsBox = document.getElementById("stepDetailsBox");
+        if (detailsBox) {
+            detailsBox.innerHTML = `
+                <div style="background: #1e293b; padding: 10px 14px; border-radius: 8px; border: 1px solid #334155;">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Lower Bound (a)</div>
+                    <div style="font-family: monospace; font-size: 1rem; font-weight: bold; color: #fbbf24;">${step.a}</div>
+                </div>
+                <div style="background: #1e293b; padding: 10px 14px; border-radius: 8px; border: 1px solid #334155;">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Upper Bound (b)</div>
+                    <div style="font-family: monospace; font-size: 1rem; font-weight: bold; color: #f43f5e;">${step.b}</div>
+                </div>
+                <div style="background: #1e293b; padding: 10px 14px; border-radius: 8px; border: 1px solid #334155;">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Root (c)</div>
+                    <div style="font-family: monospace; font-size: 1rem; font-weight: bold; color: #38bdf8;">${step.c}</div>
+                </div>
+                <div style="background: #1e293b; padding: 10px 14px; border-radius: 8px; border: 1px solid #334155;">
+                    <div style="font-size: 0.75rem; color: #94a3b8;">Function f(c)</div>
+                    <div style="font-family: monospace; font-size: 1rem; font-weight: bold; color: #34d399;">${step.fc}</div>
+                </div>
+            `;
+        }
+
+        const canvas = document.getElementById('stepChart');
+        if (!canvas) return;
+        const ctx = canvas.getContext('2d');
+        const aVal = parseFloat(step.a);
+        const bVal = parseFloat(step.b);
+        const cVal = parseFloat(step.c);
+
+        if (stepChart) stepChart.destroy();
+
+        if (typeof Chart !== 'undefined') {
+            stepChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: ['Lower Bound (a)', 'Interpolated Root (c)', 'Upper Bound (b)'],
+                    datasets: [{
+                        label: 'Interval Value',
+                        data: [aVal, cVal, bVal],
+                        backgroundColor: ['#fbbf24', '#38bdf8', '#f43f5e'],
+                        borderRadius: 6
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    animation: { duration: 300 },
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        x: { grid: { color: '#334155' }, ticks: { color: '#f8fafc' } },
+                        y: { grid: { display: false }, ticks: { color: '#f8fafc' } }
+                    }
+                }
+            });
+        }
+    }
+
+    function changeStep(dir) {
+        currentStepIdx += dir;
+        if (currentStepIdx < 0) currentStepIdx = 0;
+        if (currentStepIdx >= stepsData.length) currentStepIdx = stepsData.length - 1;
+        renderStepChart(currentStepIdx);
+    }
+
+    function togglePlay() {
+        const btn = document.getElementById("playBtn");
+        if (autoPlayInterval) {
+            clearInterval(autoPlayInterval);
+            autoPlayInterval = null;
+            if (btn) btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Auto Play`;
+        } else {
+            if (btn) btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="4" width="4" height="16"></rect><rect x="14" y="4" width="4" height="16"></rect></svg> Pause`;
+            autoPlayInterval = setInterval(() => {
+                if (currentStepIdx < stepsData.length - 1) {
+                    currentStepIdx++;
+                    renderStepChart(currentStepIdx);
+                } else {
+                    clearInterval(autoPlayInterval);
+                    autoPlayInterval = null;
+                    if (btn) btn.innerHTML = `<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polygon points="5 3 19 12 5 21 5 3"></polygon></svg> Auto Play`;
+                }
+            }, 1000);
+        }
+    }
+</script>
+{% endblock %}
